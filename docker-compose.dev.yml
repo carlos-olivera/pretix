@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pretix
+      POSTGRES_USER: pretix
+      POSTGRES_PASSWORD: pretix
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pretix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: >
+      bash -c "
+        python manage.py migrate --noinput &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      - ./src:/pretix/src
+      - ./docker:/pretix/docker
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PRETIX_CONFIG_FILE=/pretix/docker/dev/pretix.cfg
+      - DJANGO_SETTINGS_MODULE=pretix.settings
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: >
+      bash -c "
+        celery -A pretix.celery_app worker -l DEBUG
+      "
+    volumes:
+      - ./src:/pretix/src
+      - ./docker:/pretix/docker
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - PRETIX_CONFIG_FILE=/pretix/docker/dev/pretix.cfg
+      - DJANGO_SETTINGS_MODULE=pretix.settings
+
+volumes:
+  pg_data:

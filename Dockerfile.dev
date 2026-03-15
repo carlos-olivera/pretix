@@ -1,0 +1,42 @@
+FROM python:3.11-bookworm
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+            build-essential \
+            gettext \
+            git \
+            libffi-dev \
+            libjpeg-dev \
+            libmemcached-dev \
+            libpq-dev \
+            libssl-dev \
+            libxml2-dev \
+            libxslt1-dev \
+            locales \
+            libmaxminddb0 \
+            libmaxminddb-dev \
+            zlib1g-dev \
+            nodejs \
+            npm && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    dpkg-reconfigure locales && \
+    locale-gen C.UTF-8 && \
+    /usr/sbin/update-locale LANG=C.UTF-8
+
+ENV LC_ALL=C.UTF-8
+
+WORKDIR /pretix
+
+COPY pyproject.toml /pretix/pyproject.toml
+COPY _build /pretix/_build
+COPY src /pretix/src
+
+RUN pip install -U pip setuptools wheel && \
+    PRETIX_DOCKER_BUILD=TRUE pip install -e ".[dev]" && \
+    pip install django-extensions ipython && \
+    rm -rf ~/.cache/pip
+
+WORKDIR /pretix/src
+
+EXPOSE 8000
