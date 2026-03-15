@@ -68,5 +68,24 @@ services:
       - PRETIX_CONFIG_FILE=/pretix/docker/dev/pretix.cfg
       - DJANGO_SETTINGS_MODULE=pretix.settings
 
+  front-pretix:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_PROXY_TARGET=${VITE_PROXY_TARGET:-https://pretix.ovopaydemo.live}
+      - VITE_PRETIX_API_URL=
+      - VITE_PRETIX_API_TOKEN=nkpu39gs4x5fqjvarln9ir3b6zsw7333mhnxa0q19dwne63de76b4pnudg0jxobj
+      - VITE_PRETIX_ORGANIZER=prestaya-latam
+      - VITE_PRETIX_EVENT=eliminatoria01
+      - VITE_SUPABASE_URL=https://brgajyiaelalfbbfkiqu.supabase.co
+      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyZ2FqeWlhZWxhbGZiYmZraXF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1NzY0NDgsImV4cCI6MjA4OTE1MjQ0OH0.xtE5C6OeS0gB5vddHwU1EEEhCsfZR7IaGf44WKqtzwk
+
 volumes:
   pg_data:

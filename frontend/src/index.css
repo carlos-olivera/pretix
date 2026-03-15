@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #16936F;
+    --color-primary-dark: #124B60;
+    --color-primary-light: #8DC796;
+    --color-secondary: #8DC796;
+    --color-accent: #F3E9D3;
+  }
+
+  body {
+    @apply bg-accent;
+  }
+}
