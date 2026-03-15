@@ -15,7 +15,25 @@ import type {
   BNPLDashboardStats,
 } from '../../types/bnpl';
 
-const supabase = createClient(config.supabase.url, config.supabase.anonKey);
+// Lazy initialization: only create Supabase client when actually needed
+// This prevents crashes when BNPL/Supabase env vars are not configured
+let _supabase: ReturnType<typeof createClient> | null = null;
+
+function getSupabase() {
+  if (!_supabase) {
+    if (!config.supabase.url || !config.supabase.anonKey) {
+      throw new Error('BNPL is not configured: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required');
+    }
+    _supabase = createClient(config.supabase.url, config.supabase.anonKey);
+  }
+  return _supabase;
+}
+
+const supabase = new Proxy({} as ReturnType<typeof createClient>, {
+  get(_target, prop) {
+    return (getSupabase() as any)[prop];
+  },
+});
 
 export class BNPLClient {
   async getKYCProfile(userId: string): Promise<UserKYCProfile | null> {
